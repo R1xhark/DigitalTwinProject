@@ -1,14 +1,10 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.text.DecimalFormat;
+import java.awt.event.*;
+import java.io.*;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 import java.util.Random;
 
@@ -21,6 +17,8 @@ public class DigitalTwinDemo extends JFrame {
     private JButton addButton;
     private JButton deleteButton; // New delete button
     private List<Asset> assetList;
+
+    private static final String ASSET_FILE_NAME = "assets.ser"; // File to save assets
 
     public DigitalTwinDemo() {
         setTitle("Digital Twin Demo");
@@ -100,6 +98,18 @@ public class DigitalTwinDemo extends JFrame {
                 }
             }
         });
+
+        // Load assets from the file if available
+        loadAssets();
+
+        // Add a window close listener to save assets when the program is closed
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                // Save assets before closing
+                saveAssets();
+            }
+        });
     }
 
     private void updateDigitalTwinData() {
@@ -160,6 +170,27 @@ public class DigitalTwinDemo extends JFrame {
         return assetList;
     }
 
+    // Method to save assets to a file
+    private void saveAssets() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ASSET_FILE_NAME))) {
+            oos.writeObject(assetList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to load assets from a file
+    private void loadAssets() {
+        File file = new File(ASSET_FILE_NAME);
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ASSET_FILE_NAME))) {
+                assetList = (List<Asset>) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -171,7 +202,7 @@ public class DigitalTwinDemo extends JFrame {
     }
 }
 
-class Asset {
+class Asset implements Serializable {
     private int id;
     private String name;
     private String assetType; // New field for asset type
